@@ -13,6 +13,7 @@ import {
   getMovieRating,
 } from "../lib/supabase";
 import Navbar from "../components/Navbar";
+import { useToast } from "../components/ToastContext";
 
 export default function Watchlist() {
   const router = useRouter();
@@ -26,12 +27,26 @@ export default function Watchlist() {
   const [ratingModal, setRatingModal] = useState(null); // { movieId, title }
   const [currentRating, setCurrentRating] = useState(0);
   const [review, setReview] = useState("");
+  const toast = useToast();
 
   useEffect(() => {
     checkAuth();
     loadWatchlist();
     loadPopularMovies();
   }, []);
+
+  // If navigated here with ?search=..., run the search automatically
+  useEffect(() => {
+    const q = router?.query?.search
+    if (q && String(q).trim()) {
+      (async () => {
+        const results = await searchMovies(String(q))
+        setSearchResults(results)
+        setActiveTab('search')
+        setSearchQuery(String(q))
+      })()
+    }
+  }, [router?.query?.search])
 
   async function checkAuth() {
     const currentUser = await getCurrentUser();
@@ -72,9 +87,9 @@ export default function Watchlist() {
     
     if (result.ok) {
       loadWatchlist();
-      alert("Added to watchlist!");
+      toast.showToast && toast.showToast(`Added "${movie.title}" to your watchlist`, { type: 'success' });
     } else {
-      alert(result.message || "Failed to add");
+      toast.showToast && toast.showToast(result.message || "Failed to add", { type: 'error' });
     }
   }
 
@@ -83,8 +98,9 @@ export default function Watchlist() {
     
     if (result.ok) {
       loadWatchlist();
+      toast.showToast && toast.showToast('Removed from watchlist', { type: 'info' });
     } else {
-      alert(result.message || "Failed to remove");
+      toast.showToast && toast.showToast(result.message || "Failed to remove", { type: 'error' });
     }
   }
 
@@ -103,19 +119,19 @@ export default function Watchlist() {
 
   async function handleSubmitRating() {
     if (currentRating === 0) {
-      alert("Please select a rating");
+      toast.showToast && toast.showToast("Please select a rating", { type: 'error' });
       return;
     }
     
     const result = await rateMovie(ratingModal.movieId, currentRating, review);
     
     if (result.ok) {
-      alert("Rating submitted!");
+      toast.showToast && toast.showToast("Rating submitted!", { type: 'success' });
       setRatingModal(null);
       setCurrentRating(0);
       setReview("");
     } else {
-      alert(result.message || "Failed to submit rating");
+      toast.showToast && toast.showToast(result.message || "Failed to submit rating", { type: 'error' });
     }
   }
 

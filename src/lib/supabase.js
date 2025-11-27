@@ -185,6 +185,23 @@ export async function getAllRatingsForMovie(movieId) {
   return data || []
 }
 
+export async function getUserRatings(userId) {
+  const supabase = getSupabase()
+
+  const { data, error } = await supabase
+    .from('ratings')
+    .select('movie_id, rating, review, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching user ratings:', error)
+    return []
+  }
+
+  return data || []
+}
+
 // TMDB API functions
 export async function searchMovies(query) {
   const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY
