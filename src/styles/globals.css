@@ -1,26 +1,72 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Netflix Global Theme */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #141414;
+  color: white;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+}
+
+/* Navbar */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(20,20,20,0.95), rgba(20,20,20,0.75));
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.brand {
+  font-weight: 700;
+  color: #e50914;
+  margin-right: 18px;
+}
+.nav-left { display:flex; align-items:center }
+.nav-links { list-style: none; display:flex; gap:12px; margin-left:8px }
+.nav-links li { color: #ddd }
+.nav-right { display:flex; align-items:center; gap:12px }
+.search { background: rgba(255,255,255,0.06); padding:8px 10px; border-radius:4px; color:#fff; border:1px solid rgba(255,255,255,0.03) }
+.avatar { width:34px; height:34px; border-radius:4px; background:linear-gradient(45deg,#444,#222) }
+
+/* Movie grid */
+.movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+.movie-card { position: relative; perspective: 1000px }
+.poster-wrap { overflow: visible }
+.poster {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+  transform-origin: center center;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.movie-card:hover .poster {
+  transform: scale(1.15) translateY(-8px);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.7);
+}
+.movie-info { margin-top:8px }
+.movie-title { font-size:14px; color:#ddd }
+
+@media (min-width: 900px) {
+  .movies-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
