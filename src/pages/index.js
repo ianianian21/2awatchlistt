@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <>
       <script>
-        {`window.location.href = "/signup";`}
+        {`window.location.href = "/login";`}
       </script>
     </>
   );

@@ -44,6 +44,70 @@ export async function signIn(email, password) {
 export async function signOut() {
   const supabase = getSupabase()
   await supabase.auth.signOut()
+
+  // Remove saved "remember me" credentials when user signs out
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem('remember_creds')
+    }
+  } catch (err) {
+    // ignore storage errors
+  }
+}
+
+// Update user profile metadata (username, avatar_url)
+export async function updateUserProfile({ username, avatar_url }) {
+  const supabase = getSupabase()
+  const updates = {}
+  if (typeof username !== 'undefined') updates.username = username
+  if (typeof avatar_url !== 'undefined') updates.avatar_url = avatar_url
+
+  try {
+    const { data, error } = await supabase.auth.updateUser({ data: updates })
+    if (error) return { ok: false, message: error.message }
+    return { ok: true, data }
+  } catch (err) {
+    return { ok: false, message: err.message }
+  }
+}
+
+// Change user password
+export async function updateUserPassword(newPassword) {
+  const supabase = getSupabase()
+  try {
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) return { ok: false, message: error.message }
+    return { ok: true, data }
+  } catch (err) {
+    return { ok: false, message: err.message }
+  }
+}
+
+// Upload avatar file to Supabase Storage (bucket: 'avatars') and return public URL
+export async function uploadAvatar(file, userId) {
+  const supabase = getSupabase()
+  if (!file) return { ok: false, message: 'No file provided' }
+
+  // create a unique filename
+  const ext = file.name?.split('.')?.pop() || 'png'
+  const fileName = `${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`
+  // store under user-specific folder when userId available
+  const prefix = userId ? `avatars/${userId}` : 'avatars'
+  const filePath = `${prefix}/${fileName}`
+
+  try {
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file)
+    if (uploadError) return { ok: false, message: uploadError.message }
+
+    const { data: urlData, error: urlError } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    if (urlError) return { ok: false, message: urlError.message }
+    const publicUrl = urlData?.publicUrl || null
+    if (!publicUrl) return { ok: false, message: 'Failed to get public URL' }
+
+    return { ok: true, url: publicUrl }
+  } catch (err) {
+    return { ok: false, message: err.message }
+  }
 }
 
 export async function getCurrentUser() {
@@ -236,4 +300,16 @@ export async function getPopularMovies() {
 export function getImageUrl(path, size = 'w500') {
   if (!path) return '/placeholder-movie.jpg'
   return `https://image.tmdb.org/t/p/${size}${path}`
+}
+
+// Upsert a row into a `profiles` table. Useful to keep a separate profiles table in sync.
+export async function upsertProfileRow({ id, username, avatar_url }) {
+  const supabase = getSupabase()
+  try {
+    const { data, error } = await supabase.from('profiles').upsert({ id, username, avatar_url })
+    if (error) return { ok: false, message: error.message }
+    return { ok: true, data }
+  } catch (err) {
+    return { ok: false, message: err.message }
+  }
 }
